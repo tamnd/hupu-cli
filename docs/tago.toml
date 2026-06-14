@@ -1,5 +1,5 @@
 title       = "hupu"
-baseURL     = "https://hupu-cli-cli.tamnd.com/"
+baseURL     = "https://hupu-cli.tamnd.com/"
 description = "Browse Hupu sports community posts (虎扑)"
 contentDir  = "content"
 outputDir   = "public"
@@ -7,4 +7,4 @@ theme       = "tago-doks"
 syntaxHighlight = "true"
 
 [params]
-github = "https://github.com/tamnd/hupu-cli-cli"
+github = "https://github.com/tamnd/hupu-cli"

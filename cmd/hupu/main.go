@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/fang"
-	"github.com/tamnd/hupu-cli-cli/cli"
+	"github.com/tamnd/hupu-cli/cli"
 )
 
 func main() {
