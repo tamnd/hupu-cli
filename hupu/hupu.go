@@ -9,12 +9,17 @@ package hupu
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
+
+// searchAPIURL is the mobile search API endpoint.
+const searchAPIURL = "https://games.mobileapi.hupu.com/7.5.80/search/v2"
 
 // DefaultUserAgent mimics a desktop Chrome browser.
 const DefaultUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -129,6 +134,47 @@ func (c *Client) pace() {
 		time.Sleep(wait)
 	}
 	c.last = time.Now()
+}
+
+// searchResp is the shape returned by the mobile search API.
+type searchResp struct {
+	Data struct {
+		Thread struct {
+			List []struct {
+				TID   int    `json:"tid"`
+				Title string `json:"title"`
+			} `json:"list"`
+		} `json:"thread"`
+	} `json:"data"`
+}
+
+// Search queries the Hupu mobile search API and returns matching posts.
+// If limit <= 0, all results from the first page are returned.
+func (c *Client) Search(ctx context.Context, query string, limit int) ([]Post, error) {
+	u := searchAPIURL + "?query=" + url.QueryEscape(query) + "&page=1&type=all"
+	body, err := c.get(ctx, u)
+	if err != nil {
+		return nil, fmt.Errorf("search: %w", err)
+	}
+
+	var resp searchResp
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("search decode: %w", err)
+	}
+
+	var out []Post
+	for i, item := range resp.Data.Thread.List {
+		out = append(out, Post{
+			Rank:  i + 1,
+			ID:    fmt.Sprintf("%d", item.TID),
+			Title: item.Title,
+			URL:   "https://bbs.hupu.com/" + fmt.Sprintf("%d", item.TID) + ".html",
+		})
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out, nil
 }
 
 func backoff(attempt int) time.Duration {
